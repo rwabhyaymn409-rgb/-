@@ -23,12 +23,12 @@ jobs:
             bc bison build-essential clang lld llvm flex gcc-aarch64-linux-gnu \
             libelf-dev libssl-dev lz4 make python3 rsync unzip zip curl
 
-      - name: Fetch GKI Kernel Source (Android 16 / 6.1)
+      - name: Fetch GKI Kernel Source (Pixel 6 Pro raviole)
         run: |
-          echo "[*] Cloning Android 16 6.1 GKI common branch..."
-          git clone --depth=1 -b android15-6.1 https://android.googlesource.com/kernel/common $HOME/android_kernel || \
-          git clone --depth=1 -b android14-6.1 https://android.googlesource.com/kernel/common $HOME/android_kernel || \
-          git clone --depth=1 -b android14-5.10 https://android.googlesource.com/kernel/common $HOME/android_kernel
+          echo "[*] Cloning Pixel 6 Pro / GKI kernel tree..."
+          git clone --depth=1 -b main-16k-gs-raviole-5.10 https://android.googlesource.com/kernel/common $HOME/android_kernel || \
+          git clone --depth=1 -b upstream-linux-5.10.y https://android.googlesource.com/kernel/common $HOME/android_kernel || \
+          git clone --depth=1 -b android16-6.12 https://android.googlesource.com/kernel/common $HOME/android_kernel
 
       - name: Prepare Kernel Headers
         run: |
