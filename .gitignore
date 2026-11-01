@@ -1,0 +1,17 @@
+*.ko
+*.mod.c
+*.mod
+*.o
+*.order
+*.symvers
+.tmp_versions/
+.cache.mk
+
+# Gradle / Android
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+.cxx/
