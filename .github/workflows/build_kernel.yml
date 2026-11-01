@@ -23,17 +23,22 @@ jobs:
             bc bison build-essential clang lld llvm flex gcc-aarch64-linux-gnu \
             libelf-dev libssl-dev lz4 make python3 rsync unzip zip curl
 
-      - name: Fetch GKI Kernel Source (Pixel 6 Pro raviole)
+      - name: Fetch Exact Kernel Commit (fa1d6308d1fe)
         run: |
-          echo "[*] Cloning Pixel 6 Pro / GKI kernel tree..."
-          git clone --depth=1 -b main-16k-gs-raviole-5.10 https://android.googlesource.com/kernel/common $HOME/android_kernel || \
-          git clone --depth=1 -b upstream-linux-5.10.y https://android.googlesource.com/kernel/common $HOME/android_kernel || \
-          git clone --depth=1 -b android16-6.12 https://android.googlesource.com/kernel/common $HOME/android_kernel
+          mkdir -p $HOME/android_kernel
+          cd $HOME/android_kernel
+          git init
+          git remote add origin https://android.googlesource.com/kernel/common
+          echo "[*] Fetching exact Pixel 6 Pro kernel commit fa1d6308d1fe..."
+          git fetch --depth=1 origin fa1d6308d1fe
+          git checkout FETCH_HEAD
 
-      - name: Prepare Kernel Headers
+      - name: Prepare Kernel Headers (Matching exact vermagic)
         run: |
           cd $HOME/android_kernel
-          make ARCH=arm64 LLVM=1 defconfig
+          make ARCH=arm64 LLVM=1 gki_defconfig || make ARCH=arm64 LLVM=1 defconfig
+          sed -i 's/CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION="-android14-11-gfa1d6308d1fe-ab14691759"/' .config
+          echo 'CONFIG_LOCALVERSION="-android14-11-gfa1d6308d1fe-ab14691759"' >> .config
           make ARCH=arm64 LLVM=1 modules_prepare -j$(nproc)
 
       - name: Compile ff_kdriver.ko
