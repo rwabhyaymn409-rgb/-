@@ -13,10 +13,10 @@ CLANG_DIR ?= $(HOME)/pixel6_kernel/prebuilts/clang/host/linux-x86_64/clang-r5228
 
 # ── ARM64 / GKI ──────────────────────────────────────────────
 ARCH          := arm64
-CC            := $(CLANG_DIR)/bin/clang
-LD            := $(CLANG_DIR)/bin/ld.lld
-CROSS_COMPILE := aarch64-linux-androidkernel-
-CLANG_TRIPLE  := aarch64-linux-gnu-
+CC            ?= $(if $(wildcard $(CLANG_DIR)/bin/clang),$(CLANG_DIR)/bin/clang,clang)
+LD            ?= $(if $(wildcard $(CLANG_DIR)/bin/ld.lld),$(CLANG_DIR)/bin/ld.lld,ld.lld)
+CROSS_COMPILE ?= aarch64-linux-gnu-
+CLANG_TRIPLE  ?= aarch64-linux-gnu-
 
 # ── Module flags ─────────────────────────────────────────────
 ccflags-y := \

@@ -16,52 +16,31 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Build Dependencies
+      - name: Install Toolchain & Build Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            bc bison build-essential ccache curl flex g++-multilib gcc-multilib \
-            git gnupg gperf libelf-dev libssl-dev lz4 make python3 rsync unzip zip
+            bc bison build-essential clang lld llvm flex gcc-aarch64-linux-gnu \
+            libelf-dev libssl-dev lz4 make python3 rsync unzip zip curl
 
-      - name: Download Android Clang Toolchain (r522817)
+      - name: Fetch GKI Kernel Source (Android 16 / 6.1)
         run: |
-          mkdir -p $HOME/toolchain
-          cd $HOME/toolchain
-          CLANG_URL="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r522817.tar.gz"
-          echo "[*] Downloading Clang r522817..."
-          curl -sSL "$CLANG_URL" | tar -xz || {
-            echo "[!] Fallback downloading AOSP clang r522817c..."
-            curl -sSL "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r522817c.tar.gz" | tar -xz
-          }
-
-      - name: Fetch GKI Kernel Headers (Android 16 / 6.1)
-        run: |
-          mkdir -p $HOME/android_kernel
-          cd $HOME/android_kernel
-          echo "[*] Cloning common kernel headers for android16-6.1..."
-          git clone --depth=1 -b android16-6.1 https://android.googlesource.com/kernel/common $HOME/android_kernel || \
-          git clone --depth=1 -b android15-6.1 https://android.googlesource.com/kernel/common $HOME/android_kernel
+          echo "[*] Cloning Android 16 6.1 GKI common branch..."
+          git clone --depth=1 -b android15-6.1 https://android.googlesource.com/kernel/common $HOME/android_kernel || \
+          git clone --depth=1 -b android14-6.1 https://android.googlesource.com/kernel/common $HOME/android_kernel || \
+          git clone --depth=1 -b android14-5.10 https://android.googlesource.com/kernel/common $HOME/android_kernel
 
       - name: Prepare Kernel Headers
         run: |
           cd $HOME/android_kernel
-          export PATH="$HOME/toolchain/bin:$PATH"
-          export ARCH=arm64
-          export CC=$HOME/toolchain/bin/clang
-          export LD=$HOME/toolchain/bin/ld.lld
-          export CLANG_TRIPLE=aarch64-linux-gnu-
-          export CROSS_COMPILE=aarch64-linux-gnu-
-
-          make ARCH=arm64 defconfig
-          make ARCH=arm64 CC=$CC LD=$LD CLANG_TRIPLE=$CLANG_TRIPLE CROSS_COMPILE=$CROSS_COMPILE modules_prepare -j$(nproc)
+          make ARCH=arm64 LLVM=1 defconfig
+          make ARCH=arm64 LLVM=1 modules_prepare -j$(nproc)
 
       - name: Compile ff_kdriver.ko
         run: |
           cd kernel
-          export KDIR=$HOME/android_kernel
-          export CLANG_DIR=$HOME/toolchain
-          export PATH="$CLANG_DIR/bin:$PATH"
-          make all
+          make ARCH=arm64 LLVM=1 -C $HOME/android_kernel M=$(pwd) modules -j$(nproc)
+          ls -la ff_kdriver.ko
 
       - name: Upload Kernel Driver Artifact
         uses: actions/upload-artifact@v4
