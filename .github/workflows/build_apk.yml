@@ -4,12 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [ main, master ]
-    paths:
-      - 'app/**'
-      - 'jni/**'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.github/workflows/build_apk.yml'
 
 jobs:
   build-apk:
@@ -25,24 +19,24 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK & NDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install NDK and CMake
         run: |
           sdkmanager --install "ndk;25.2.9519653" "cmake;3.22.1"
 
-      - name: Grant Execute Permission to Gradlew
-        run: |
-          gradle wrapper --gradle-version 8.5
-          chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.5
 
       - name: Build Debug APK
         run: |
-          ./gradlew assembleDebug --stacktrace
+          gradle assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KANHA-FF-Debug-APK
+          name: KANHA-FF-APK
           path: app/build/outputs/apk/debug/app-debug.apk
