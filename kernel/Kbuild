@@ -1,0 +1,10 @@
+obj-m += ff_kdriver.o
+
+ccflags-y := \
+    -O2 \
+    -DCONFIG_ANDROID=1 \
+    -DCONFIG_KPROBES=1 \
+    -DKBUILD_MODNAME='"ff_kdriver"' \
+    -Wno-unused-function \
+    -Wno-declaration-after-statement \
+    -Wno-implicit-function-declaration
