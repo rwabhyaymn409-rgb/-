@@ -23,6 +23,15 @@
 #include <linux/seq_file.h>
 #include <linux/list.h>
 #include <linux/string.h>
+#include <linux/device.h>
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
+#define GUP_REMOTE(mm, cur, nr, flags, pages, vmas) \
+    get_user_pages_remote(mm, cur, nr, flags, pages, vmas)
+#else
+#define GUP_REMOTE(mm, cur, nr, flags, pages, vmas) \
+    get_user_pages_remote(mm, cur, nr, flags, pages, vmas, NULL)
+#endif
 
 // ============================================================
 // GKI COMPAT — kallsyms_lookup_name blocked on Android 16
@@ -108,9 +117,9 @@ static int KernelReadMem(pid_t pid, unsigned long addr,
 
     while (remaining > 0) {
         struct page* page = NULL;
-        int pg = get_user_pages_remote(mm, cur, 1,
-                                       FOLL_FORCE | FOLL_REMOTE,
-                                       &page, NULL);
+        int pg = GUP_REMOTE(mm, cur, 1,
+                            FOLL_FORCE | FOLL_REMOTE,
+                            &page, NULL);
         if (pg <= 0) { ret = -EFAULT; break; }
 
         void* mapped = kmap(page);
@@ -156,7 +165,7 @@ static int KernelWriteMem(pid_t pid, unsigned long addr,
 
     while (remaining > 0) {
         struct page* page = NULL;
-        int pg = get_user_pages_remote(mm, cur, 1,
+        int pg = GUP_REMOTE(mm, cur, 1,
                     FOLL_FORCE | FOLL_WRITE | FOLL_REMOTE,
                     &page, NULL);
         if (pg <= 0) { ret = -EFAULT; break; }
@@ -209,10 +218,14 @@ static unsigned long FindModuleBase(pid_t pid, const char* modname) {
 
     unsigned long base = 0;
     struct vm_area_struct* vma;
-    VMA_ITERATOR(vmi, mm, 0);
 
     mmap_read_lock(mm);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+    VMA_ITERATOR(vmi, mm, 0);
     for_each_vma(vmi, vma) {
+#else
+    for (vma = mm->mmap; vma; vma = vma->vm_next) {
+#endif
         if (vma->vm_file) {
             char buf[256] = {};
             char* p = d_path(&vma->vm_file->f_path, buf, sizeof(buf));
