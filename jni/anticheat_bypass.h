@@ -3,7 +3,7 @@
 // Forward declarations for AC bypass layer
 // ============================================================
 #pragma once
-#include "cheat_bridge.cpp"   // pulls in KernelBridge + g_bridge
+#include "cheat_bridge.h"
 
 void InitACBypass(KernelBridge& kb);
 void SuspendACThread(pid_t game_pid);

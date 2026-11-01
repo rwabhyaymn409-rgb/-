@@ -136,14 +136,11 @@ void PatchIntegrityTable(KernelBridge& kb, uint64_t il2cpp_base) {
     size_t  scan_size = 0x1000000; // scan 16MB from base
 
     for (size_t i = 0; i < scan_size - sizeof(pattern); i += 4) {
-        uint8_t buf[4];
-        KMem km{ kb.pid, il2cpp_base + i, buf, 4 };
-        ioctl(kb.fd, IOCTL_READ, &km);
-        if (memcmp(buf, pattern, 4) == 0) {
+        uint32_t val = kb.Read<uint32_t>(il2cpp_base + i);
+        if (memcmp(&val, pattern, 4) == 0) {
             // NOP the integrity call
             uint32_t nop = 0xD503201F;
-            KMem wm{ kb.pid, il2cpp_base + i, &nop, 4 };
-            ioctl(kb.fd, IOCTL_WRITE, &wm);
+            kb.Write(il2cpp_base + i, nop);
             __android_log_print(ANDROID_LOG_INFO, TAG,
                 "Patched integrity check @ 0x%zX", il2cpp_base + i);
         }
