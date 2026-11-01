@@ -4,6 +4,7 @@
 // ============================================================
 
 #include "anticheat_bypass.h"
+#include <unistd.h>
 #include <sys/ptrace.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>

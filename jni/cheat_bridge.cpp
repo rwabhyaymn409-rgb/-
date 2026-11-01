@@ -2,7 +2,7 @@
 // FILE: jni/cheat_bridge.cpp
 // Dual-Mode Bridge: Kernel Driver (/dev/ff_cheat) + Root (/proc/<pid>/mem)
 // ============================================================
-#pragma once
+#include "cheat_bridge.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
